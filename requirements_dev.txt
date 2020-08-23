@@ -1,0 +1,17 @@
+pip
+wheel
+flake8
+tox
+coverage
+Sphinx
+twine
+black
+pylint
+mypy
+doc8
+rstcheck
+
+Click
+pytest
+pytest-cov
+pytest-runner
