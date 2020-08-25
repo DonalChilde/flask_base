@@ -40,9 +40,8 @@ def app_group(ctx, verbose):
 @with_appcontext
 @pass_environment
 def info(ctx):
-    data = {"current_app":current_app,"environment":current_app.config.get('ENV')}
-    display_data = [f"{k}: {v}" for k,v in data.items()]
+    data = {"current_app": current_app, "environment": current_app.config.get("ENV")}
+    display_data = [f"{k}: {v}" for k, v in data.items()]
     ctx.log("App info:", *display_data)
-
-
+    ctx.log("config", *[f"{k}: {v}" for k, v in current_app.config.items()])
 

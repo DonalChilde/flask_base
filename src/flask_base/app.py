@@ -6,6 +6,7 @@ derived from
     """
 
 from flask import Flask
+from flask_base import config
 
 from flask_base.blueprints import cli_base, hello_world
 from flask_base.blueprints.cli_base.cli_cmd import app_group
@@ -15,10 +16,14 @@ def create_app(testing=False):
     """Application factory, used to create application
     """
     app = Flask(__name__)
-    app.config.from_object("flask_base.config")
 
     if testing is True:
-        app.config["TESTING"] = True
+        app.config.from_object(config.TestingConfig)
+        app.config.update({"CONFIG_OBJECT": type(config.TestingConfig())})
+    else:
+        app.config.from_object(config.DevelopmentConfig)
+        app.config.update({"CONFIG_OBJECT": type(config.DevelopmentConfig())})
+        app.config.from_envvar("SECRETS_CFG")
 
     configure_extensions(app)
     configure_apispec(app)
@@ -27,7 +32,7 @@ def create_app(testing=False):
     return app
 
 
-def configure_extensions(app, cli):
+def configure_extensions(app):
     """configure flask extensions
     """
     pass
