@@ -1,12 +1,18 @@
 import pytest
 
-# from dotenv import load_dotenv
-
 from flask_base.app import create_app
+
+# from dotenv import load_dotenv
 
 
 @pytest.fixture(scope="session")
 def app():
     # load_dotenv(".testenv")
-    app = create_app(testing=True)
-    return app
+    test_app = create_app(testing=True)
+    return test_app
+
+
+@pytest.fixture
+def client(app):
+    with app.test_client() as test_client:
+        yield test_client
