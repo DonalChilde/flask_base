@@ -10,17 +10,23 @@ import os
 class Config(object):
     DEBUG = False
     TESTING = False
-    DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # DATABASE_URI = "sqlite:///:memory:"
     SECRET_KEY = "change_me"
 
 
 class ProductionConfig(Config):
-    DATABASE_URI = "mysql://user@localhost/foo"
+    pass
+    # DATABASE_URI = "mysql://user@localhost/foo"
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 class TestingConfig(Config):
     TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False

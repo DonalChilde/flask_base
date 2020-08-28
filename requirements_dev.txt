@@ -7,6 +7,8 @@ Sphinx
 twine
 black
 pylint
+pylint-flask
+pylint-flask-sqlalchemy
 mypy
 doc8
 rstcheck

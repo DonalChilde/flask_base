@@ -10,6 +10,7 @@ from flask_base import config
 
 from flask_base.blueprints import cli_base, hello_world
 from flask_base.blueprints.cli_base.cli_cmd import app_group
+from flask_base.extensions import db
 
 
 def create_app(testing=False):
@@ -35,7 +36,7 @@ def create_app(testing=False):
 def configure_extensions(app):
     """configure flask extensions
     """
-    pass
+    db.init_app(app)
 
 
 def configure_apispec(app):
