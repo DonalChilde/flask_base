@@ -41,6 +41,25 @@ class User(ResourceMixin, db.Model):
 
         return self.save()
 
+    @classmethod
+    def make_user(cls, username, email, password, active=True):
+        # TODO do checks to make sure username and email are unique.
+        # or maybe just username. share emails?
+        user = cls(username=username, email=email, password=password, active=active)
+        user.save()
+        return user
+
+    @classmethod
+    def make_admin_user(cls, username, email, password, active=True):
+        admin = cls.make_user(username, email, password, active)
+        admin_role = Role.query.filter_by(name="admin").one_or_none()
+        if admin_role is None:
+            # TODO change to proper exception
+            raise Exception("Admin role not found. Did you init the roles?")
+        admin.roles.append(admin_role)
+        admin.save()
+        return admin
+
     def __repr__(self):
         return f"<User {self.username}"
 
@@ -55,20 +74,3 @@ class UserRole(ResourceMixin, db.Model):
     user_id = db.Column(GUID(), db.ForeignKey("user.id"), primary_key=True)
     role_id = db.Column(GUID(), db.ForeignKey("role.id"), primary_key=True)
 
-
-def make_user(username, email, password, active=True):
-    # TODO do checks to make sure username and email are unique.
-    # or maybe just username. share emails?
-    user = User(username=username, email=email, password=password, active=active)
-    user.save()
-    return user
-
-
-def make_admin_user(username, email, password, active=True):
-    admin = make_user(username, email, password, active)
-    admin_role = Role.query.filter_by(name="admin").one_or_none()
-    if admin_role is None:
-        # TODO change to proper exception
-        raise Exception("Admin role not found. Did you init the roles?")
-    admin.roles.append(admin_role)
-    admin.save()
