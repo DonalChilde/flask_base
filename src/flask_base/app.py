@@ -8,7 +8,7 @@ derived from
 from flask import Flask
 from flask_base import config
 
-from flask_base.blueprints import cli_base, hello_world
+from flask_base.blueprints import cli_base, hello_world, db_common, users
 from flask_base.blueprints.cli_base.cli_cmd import app_group
 from flask_base.extensions import db
 
@@ -29,7 +29,8 @@ def create_app(testing=False):
     configure_extensions(app)
     configure_apispec(app)
     register_blueprints(app)
-    app.cli.add_command(app_group)
+    register_cli(app)
+
     return app
 
 
@@ -50,3 +51,7 @@ def register_blueprints(app):
     """
     app.register_blueprint(hello_world.bp_config.bp)
     app.register_blueprint(cli_base.bp_config.bp)
+
+
+def register_cli(app):
+    app.cli.add_command(app_group)

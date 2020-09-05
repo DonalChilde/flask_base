@@ -1,80 +1,15 @@
+import uuid
 from datetime import datetime
+from typing import Optional
 
-from sqlalchemy import DateTime
-from sqlalchemy.types import TypeDecorator
-
-from flask_base.app import db
 import pytz
 
+from flask_base.extensions import db
+from flask_base.blueprints.db_common.models import GUID, AwareDateTime, ResourceMixin
 
-class AwareDateTime(TypeDecorator):
-    """
-    A DateTime type which can only store tz-aware DateTimes.
-
-    Source:
-      https://gist.github.com/inklesspen/90b554c864b99340747e
-    """
-
-    impl = DateTime(timezone=True)
-
-    def process_bind_param(self, value, dialect):
-        if isinstance(value, datetime) and value.tzinfo is None:
-            raise ValueError("{!r} must be TZ-aware".format(value))
-        return value
-
-    def __repr__(self):
-        return "AwareDateTime()"
-
-
-def tzware_datetime():
-    """
-    Return a timezone aware datetime.
-
-    :return: Datetime
-    """
-    return datetime.now(pytz.utc)
-
-
-class ResourceMixin(object):
-    # Keep track when records are created and updated.
-    created_on = db.Column(AwareDateTime(), default=tzware_datetime)
-    updated_on = db.Column(
-        AwareDateTime(), default=tzware_datetime, onupdate=tzware_datetime
-    )
-
-    def save(self):
-        """
-        Save a model instance.
-
-        :return: Model instance
-        """
-        db.session.add(self)
-        db.session.commit()
-
-    def delete(self):
-        """
-        Delete a model instance.
-
-        :return: db.session.commit()'s result
-        """
-        db.session.delete(self)
-        return db.session.commit()
-
-    def __str__(self):
-        """
-        Create a human readable version of a class instance.
-
-        :return: self
-        """
-        obj_id = hex(id(self))
-        columns = self.__table__.c.keys()
-
-        values = ", ".join("%s=%r" % (n, getattr(self, n)) for n in columns)
-        return "<%s %s(%s)>" % (obj_id, self.__class__.__name__, values)
-
-
+# TODO password hash
 class User(ResourceMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(GUID(), primary_key=True, default=str(uuid.uuid4()))
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
@@ -85,6 +20,7 @@ class User(ResourceMixin, db.Model):
     current_sign_in_ip = db.Column(db.String(45))
     last_sign_in_on = db.Column(AwareDateTime())
     last_sign_in_ip = db.Column(db.String(45))
+    roles = db.relationship("Role", backref="users")
 
     def update_activity_tracking(self, ip_address):
         """
@@ -107,3 +43,32 @@ class User(ResourceMixin, db.Model):
 
     def __repr__(self):
         return f"<User {self.username}"
+
+
+class Role(ResourceMixin, db.Model):
+    id = db.Column(GUID(), primary_key=True, default=str(uuid.uuid4()))
+    name = db.Column(db.String(), nullable=False, unique=True)
+    description = db.Column(db.String())
+
+
+class UserRole(ResourceMixin, db.Model):
+    user_id = db.Column(GUID(), db.ForeignKey("user.id"), primary_key=True)
+    role_id = db.Column(GUID(), db.ForeignKey("role.id"), primary_key=True)
+
+
+def make_user(username, email, password, active=True):
+    # TODO do checks to make sure username and email are unique.
+    # or maybe just username. share emails?
+    user = User(username=username, email=email, password=password, active=active)
+    user.save()
+    return user
+
+
+def make_admin_user(username, email, password, active=True):
+    admin = make_user(username, email, password, active)
+    admin_role = Role.query.filter_by(name="admin").one_or_none()
+    if admin_role is None:
+        # TODO change to proper exception
+        raise Exception("Admin role not found. Did you init the roles?")
+    admin.roles.append(admin_role)
+    admin.save()
