@@ -5,11 +5,25 @@ from typing import Optional
 import pytz
 
 from flask_base.extensions import db
-from flask_base.blueprints.db_common.models import GUID, AwareDateTime, ResourceMixin
+from flask_base.blueprints.db_common.models import (
+    GUID,
+    AwareDateTime,
+    ResourceMixin,
+    default_uuid,
+)
 
 # TODO password hash
+
+user_role_table = db.Table(
+    "user_role",
+    db.Model.metadata,
+    db.Column("user_id", GUID(), db.ForeignKey("user.id"), primary_key=True),
+    db.Column("role_id", GUID(), db.ForeignKey("role.id"), primary_key=True),
+)
+
+
 class User(ResourceMixin, db.Model):
-    id = db.Column(GUID(), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(GUID(), primary_key=True, default=default_uuid)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
@@ -20,7 +34,7 @@ class User(ResourceMixin, db.Model):
     current_sign_in_ip = db.Column(db.String(45))
     last_sign_in_on = db.Column(AwareDateTime())
     last_sign_in_ip = db.Column(db.String(45))
-    roles = db.relationship("Role", backref="users")
+    roles = db.relationship("Role", secondary=user_role_table, backref="users")
 
     def update_activity_tracking(self, ip_address):
         """
@@ -65,12 +79,12 @@ class User(ResourceMixin, db.Model):
 
 
 class Role(ResourceMixin, db.Model):
-    id = db.Column(GUID(), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(GUID(), primary_key=True, default=default_uuid)
     name = db.Column(db.String(), nullable=False, unique=True)
     description = db.Column(db.String())
 
 
-class UserRole(ResourceMixin, db.Model):
-    user_id = db.Column(GUID(), db.ForeignKey("user.id"), primary_key=True)
-    role_id = db.Column(GUID(), db.ForeignKey("role.id"), primary_key=True)
+# class UserRole(ResourceMixin, db.Model):
+#     user_id = db.Column(GUID(), db.ForeignKey("user.id"), primary_key=True)
+#     role_id = db.Column(GUID(), db.ForeignKey("role.id"), primary_key=True)
 

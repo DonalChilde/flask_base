@@ -1,10 +1,13 @@
 """Default configuration
-Use env var to override
+Use .secrets.cfg to override
 """
-import os
 
-# ENV = os.getenv("FLASK_ENV")
-# DEBUG = ENV == "development"
+
+# {"name": "", "description": ""}
+ROLES = [
+    {"name": "admin", "description": "Admin users."},
+    {"name": "user", "description": "Standard users"},
+]
 
 
 class Config(object):

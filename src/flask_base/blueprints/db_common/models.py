@@ -11,6 +11,10 @@ from flask_base.extensions import db
 # TODO make 'dev' only display of db tables and data.
 
 
+def default_uuid():
+    return str(uuid.uuid4())
+
+
 class GUID(TypeDecorator):
     """Platform-independent GUID type.
 
