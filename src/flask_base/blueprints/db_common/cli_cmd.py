@@ -27,13 +27,20 @@ def reset(ctx):
 @with_appcontext
 @pass_environment
 def seed_data(ctx, test_data=False):
+    seed_roles()
+    ctx.log("Roles seeded.")
+    seed_admin(current_app)
+    ctx.log("Admin seeded.")
+
+
+def seed_roles():
     # seed the roles
     for role_seed in ROLES:
         role = Role(**role_seed)
         role.save()
-    ctx.log("Roles seeded.")
+
+
+def seed_admin(app):
     # seed the admin user
     admin_seed = current_app.config.get_namespace("SEED_ADMIN_")
     User.make_admin_user(**admin_seed)
-    ctx.log("Admin seeded.")
-

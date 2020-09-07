@@ -6,25 +6,48 @@ derived from
     """
 
 from flask import Flask
-from flask_base import config
 
-from flask_base.blueprints import cli_base, hello_world, db_common, users
+from flask_base.blueprints import cli_base, db_common, hello_world, users
 from flask_base.blueprints.cli_base.cli_cmd import app_group
+from flask_base.config import (
+    Config,
+    DevelopmentConfig,
+    ProductionConfig,
+    TestingConfig,
+    get_env_variable,
+)
 from flask_base.extensions import db
 
 
-def create_app(testing=False):
+def create_app(config_class=None):
     """Application factory, used to create application
+
+    if config_class is passed in, use an instance.
     """
     app = Flask(__name__)
+    if config_class is None:
+        flask_env = get_env_variable("FLASK_ENV")
+        if flask_env == "development":
+            config_class = DevelopmentConfig()
+        elif flask_env == "production":
+            config_class = ProductionConfig()
+        else:
+            raise Exception("FLASK_ENV is not set to a known value.")
+    app.config.from_object(config_class)
+    app.config.update({"CONFIG_OBJECT": str(type(config_class))})
 
-    if testing is True:
-        app.config.from_object(config.TestingConfig)
-        app.config.update({"CONFIG_OBJECT": type(config.TestingConfig())})
-    else:
-        app.config.from_object(config.DevelopmentConfig)
-        app.config.update({"CONFIG_OBJECT": type(config.DevelopmentConfig())})
+    # TODO handle secrets for different env senarios. option - same file or separate files?
+    if isinstance(config_class, DevelopmentConfig):
         app.config.from_envvar("SECRETS_CFG")
+    elif isinstance(config_class, TestingConfig):
+        pass
+    elif isinstance(config_class, ProductionConfig):
+        app.config.from_envvar("SECRETS_CFG")
+    elif isinstance(config_class, Config):
+        pass
+    else:
+        message = "Object %s is not a Config object." % config_class.__name__
+        raise Exception(message)
 
     configure_extensions(app)
     configure_apispec(app)
